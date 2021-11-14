@@ -269,10 +269,12 @@ def remove_list_confirm(message):
         cursor.execute(
             "DROP FROM lists WHERE list_name = %s", (message.text,)
         )
-        imprt_bot.register_next_step_handler(message, main_choice_func)
+        mssg = imprt_bot.send_message(message.chat.id, "The list was successfully removed")
+        imprt_bot.register_next_step_handler(mssg, main_choice_func)
 
     elif message.text == "No":
-        imprt_bot.register_next_step_handler(message, main_choice_func)
+        mssg = imprt_bot.send_message(message.chat.id, "Choose Action:")
+        imprt_bot.register_next_step_handler(mssg, main_choice_func)
 
 def task_func(message):
     cursor.execute(
