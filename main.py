@@ -71,7 +71,7 @@ def choose_list_action(message):
     elif message.text == "Show List":
 
         cursor.execute(
-            "SELECT list_name FROM lists;"
+            "SELECT list_name FROM lists WHERE fk_list_id = %s", (message.chat.id,)
         )
         list_name = []
         while True:
