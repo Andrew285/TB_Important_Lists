@@ -16,7 +16,8 @@ connection.autocommit = True
 cursor = connection.cursor()
 
 edited_list_id = 0
-
+removed_task = ""
+removed_list = ""
 
 imprt_bot = telebot.TeleBot("2135473258:AAFdtzE5w55BZE11b7SE5wMvL6o4RLE_JH0")
 
@@ -199,6 +200,8 @@ def choose_task_to_edit(message):
     imprt_bot.register_next_step_handler(new_task, set_new_task_name)
 
 def choose_task_to_remove(message):
+    global removed_task
+    removed_task = message.text
     sure_mssg = imprt_bot.send_message(message.chat.id, "Are you sure?")
     menu = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     menu.add(types.KeyboardButton("Yes"),
@@ -207,9 +210,10 @@ def choose_task_to_remove(message):
     imprt_bot.register_next_step_handler(sure_mssg, remove_task_confirm)
 
 def remove_task_confirm(message):
+    global removed_task
     if message.text == "Yes":
         cursor.execute(
-            "DROP FROM tasks WHERE task_name = %s", (message.text,)
+            "DROP FROM tasks WHERE task_name = %s", (removed_task,)
         )
         imprt_bot.register_next_step_handler(message, choose_edit_action)
 
@@ -256,18 +260,19 @@ def show_list(message):
     imprt_bot.send_message(message.chat.id, local_string)
 
 def remove_list(message):
-    last_choice = imprt_bot.send_message(message.chat.id, "Are you sure?")
-
+    global removed_list
+    removed_list = message.text
     menu = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     menu.add(types.KeyboardButton("Yes"),
              types.KeyboardButton("No"))
-    msg = imprt_bot.send_message(message.chat.id, "Choose List:", reply_markup=menu)
+    msg = imprt_bot.send_message(message.chat.id, "Are you sure?", reply_markup=menu)
     imprt_bot.register_next_step_handler(msg, remove_list_confirm)
 
 def remove_list_confirm(message):
+    global removed_list
     if message.text == "Yes":
         cursor.execute(
-            "DROP FROM lists WHERE list_name = %s", (message.text,)
+            "DROP FROM lists WHERE list_name = %s", (removed_list,)
         )
         mssg = imprt_bot.send_message(message.chat.id, "The list was successfully removed")
         imprt_bot.register_next_step_handler(mssg, main_choice_func)
