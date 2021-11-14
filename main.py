@@ -213,7 +213,7 @@ def remove_task_confirm(message):
     global removed_task
     if message.text == "Yes":
         cursor.execute(
-            "DROP FROM tasks WHERE task_name = %s", (removed_task,)
+            "DELETE FROM tasks WHERE task_name = %s", (removed_task,)
         )
         imprt_bot.register_next_step_handler(message, choose_edit_action)
 
@@ -272,7 +272,7 @@ def remove_list_confirm(message):
     global removed_list
     if message.text == "Yes":
         cursor.execute(
-            "DROP FROM lists WHERE list_name = %s", (removed_list,)
+            "DELETE FROM lists WHERE list_name = %s", (removed_list,)
         )
         mssg = imprt_bot.send_message(message.chat.id, "The list was successfully removed")
         imprt_bot.register_next_step_handler(mssg, main_choice_func)
