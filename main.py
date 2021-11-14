@@ -15,6 +15,9 @@ connection = psycopg2.connect(
 connection.autocommit = True
 cursor = connection.cursor()
 
+edited_list_id = 0
+
+
 imprt_bot = telebot.TeleBot("2135473258:AAFdtzE5w55BZE11b7SE5wMvL6o4RLE_JH0")
 
 cursor.execute(
@@ -55,8 +58,7 @@ def main_choice_func(message):
     start_menu.add(types.KeyboardButton("Create List"),
                    types.KeyboardButton("Edit List"),
                    types.KeyboardButton("Remove List"),
-                   types.KeyboardButton("Show List"),
-                   types.KeyboardButton("Return"))
+                   types.KeyboardButton("Show List"))
     msg = imprt_bot.send_message(message.chat.id, "Choose List Action:", reply_markup=start_menu)
 
     imprt_bot.register_next_step_handler(msg, choose_list_action)
@@ -84,6 +86,152 @@ def choose_list_action(message):
         msg = imprt_bot.send_message(message.chat.id, "Choose List:", reply_markup=start_menu)
         imprt_bot.register_next_step_handler(msg, show_list)
 
+    elif message.text == "Edit List":
+        cursor.execute(
+            "SELECT list_name FROM lists;"
+        )
+        list_name = []
+        while True:
+            row = cursor.fetchone()
+            if row:
+                list_name.append(row)
+            else:
+                break
+
+        start_menu = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        for i in range(len(list_name)):
+            start_menu.add(types.KeyboardButton(text=f"{list_name[i][0]}"))
+        msg = imprt_bot.send_message(message.chat.id, "Choose List:", reply_markup=start_menu)
+        imprt_bot.register_next_step_handler(msg, edit_list)
+
+    elif message.text == "Remove List":
+        cursor.execute(
+            "SELECT list_name FROM lists;"
+        )
+        list_name = []
+        while True:
+            row = cursor.fetchone()
+            if row:
+                list_name.append(row)
+            else:
+                break
+
+        start_menu = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        for i in range(len(list_name)):
+            start_menu.add(types.KeyboardButton(text=f"{list_name[i][0]}"))
+        msg = imprt_bot.send_message(message.chat.id, "Choose List:", reply_markup=start_menu)
+        imprt_bot.register_next_step_handler(msg, remove_list)
+
+def edit_list(message):
+    global edited_list_id
+    cursor.execute(
+        "SELECT list_id FROM lists WHERE list_name = %s", (message.text,)
+    )
+    edited_list_id = cursor.fetchone()
+    menu = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    menu.add(types.KeyboardButton("Edit List Name"),
+             types.KeyboardButton("Add Task"),
+             types.KeyboardButton("Edit Task"),
+             types.KeyboardButton("Remove Task"),
+             types.InlineKeyboardButton("Return"))
+    task_choice = imprt_bot.send_message(message.chat.id, "Choose Task Action:", reply_markup=menu)
+    imprt_bot.register_next_step_handler(task_choice, choose_edit_action)
+
+def choose_edit_action(message):
+    global edited_list_id
+    if message.text == "Edit List Name":
+        new_list_name = imprt_bot.send_message(message.chat.id, "Enter the new List Name:")
+        imprt_bot.register_next_step_handler(new_list_name, set_new_list_name)
+
+    elif message.text == "Add Task":
+        new_task = imprt_bot.send_message(message.chat.id, "Enter the new task")
+        imprt_bot.register_next_step_handler(new_task, add_task_to_edit_list)
+
+    elif message.text == "Edit Task":
+        cursor.execute(
+            "SELECT task_name FROM tasks WHERE fk_task_id = %s", (edited_list_id,)
+        )
+        tasks_name = []
+        while True:
+            row = cursor.fetchone()
+            if row:
+                tasks_name.append(row)
+            else:
+                break
+
+        start_menu = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        for i in range(len(tasks_name)):
+            start_menu.add(types.KeyboardButton(text=f"{tasks_name[i][0]}"))
+        msg = imprt_bot.send_message(message.chat.id, "Choose List:", reply_markup=start_menu)
+        imprt_bot.register_next_step_handler(msg, choose_task_to_edit)
+
+    elif message.text == "Remove Task":
+        cursor.execute(
+            "SELECT task_name FROM tasks WHERE fk_task_id = %s", (edited_list_id,)
+        )
+        tasks_name = []
+        while True:
+            row = cursor.fetchone()
+            if row:
+                tasks_name.append(row)
+            else:
+                break
+
+        start_menu = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        for i in range(len(tasks_name)):
+            start_menu.add(types.KeyboardButton(text=f"{tasks_name[i][0]}"))
+        msg = imprt_bot.send_message(message.chat.id, "Choose List:", reply_markup=start_menu)
+        imprt_bot.register_next_step_handler(msg, choose_task_to_remove)
+
+    elif message.text == "Return":
+        imprt_bot.register_next_step_handler(message, main_choice_func)
+
+def add_task_to_edit_list(message):
+    global edited_list_id
+    cursor.execute(
+        "INSERT INTO tasks (task_name, fk_task_id)) VALUES (%s, %s)", (message.text, edited_list_id)
+    )
+    added_task = imprt_bot.send_message(message.chat.id, "Successfully added")
+    imprt_bot.register_next_step_handler(added_task, choose_edit_action)
+
+def choose_task_to_edit(message):
+    new_task = imprt_bot.send_message(message.chat.id, "Enter the new task:")
+    imprt_bot.register_next_step_handler(new_task, set_new_task_name)
+
+def choose_task_to_remove(message):
+    sure_mssg = imprt_bot.send_message(message.chat.id, "Are you sure?")
+    menu = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    menu.add(types.KeyboardButton("Yes"),
+             types.KeyboardButton("No"))
+    msg = imprt_bot.send_message(message.chat.id, "Choose List:", reply_markup=menu)
+    imprt_bot.register_next_step_handler(sure_mssg, remove_task_confirm)
+
+def remove_task_confirm(message):
+    if message.text == "Yes":
+        cursor.execute(
+            "DROP FROM tasks WHERE task_name = %s", (message.text,)
+        )
+        imprt_bot.register_next_step_handler(message, choose_edit_action)
+
+    elif message.text == "No":
+        imprt_bot.register_next_step_handler(message, choose_edit_action)
+
+def set_new_task_name(message):
+    global edited_list_id
+    cursor.execute(
+        "UPDATE tasks SET task_name = %s WHERE fk_task_id = %s", (message.text, edited_list_id)
+    )
+    mssg = imprt_bot.send_message(message.chat.id, "The task was successfully changed")
+    imprt_bot.register_next_step_handler(mssg, choose_edit_action)
+
+def set_new_list_name(message):
+    global edited_list_id
+    cursor.execute(
+        "UPDATE lists SET list_name = %s WHERE list_id = %s", (message.text, edited_list_id)
+    )
+    mssg = imprt_bot.send_message(message.chat.id, "The new List Name was set")
+    imprt_bot.register_next_step_handler(mssg, choose_edit_action)
+
 def show_list(message):
     cursor.execute(
         "SELECT list_id FROM lists WHERE list_name = %s", (message.text,)
@@ -91,7 +239,7 @@ def show_list(message):
     list_id = cursor.fetchone()
 
     cursor.execute(
-        "SELECT * FROM tasks WHERE fk_task_id = %s", (list_id, )
+        "SELECT task_name FROM tasks WHERE fk_task_id = %s", (list_id,)
     )
     task_list = []
     local_string = ""
@@ -102,16 +250,29 @@ def show_list(message):
         else:
             break
 
-    # local_string = "dfgsdfh"
-    imprt_bot.send_message(message.chat.id, str(len(task_list)))
-    imprt_bot.send_message(message.chat.id, task_list[0])
-    for i in range(message.chat.id, len(task_list)):
-
-        local_string += f"{i}. "
-        for j in range(len(task_list[i])):
-            local_string += f"{task_list[i][j]} | "
-        # local_string += "\n"
+    for i in range(len(task_list)):
+        local_string += task_list[i]
+        local_string += "\n"
     imprt_bot.send_message(message.chat.id, local_string)
+
+def remove_list(message):
+    last_choice = imprt_bot.send_message(message.chat.id, "Are you sure?")
+
+    menu = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    menu.add(types.KeyboardButton("Yes"),
+             types.KeyboardButton("No"))
+    msg = imprt_bot.send_message(message.chat.id, "Choose List:", reply_markup=menu)
+    imprt_bot.register_next_step_handler(msg, remove_list_confirm)
+
+def remove_list_confirm(message):
+    if message.text == "Yes":
+        cursor.execute(
+            "DROP FROM lists WHERE list_name = %s", (message.text,)
+        )
+        imprt_bot.register_next_step_handler(message, main_choice_func)
+
+    elif message.text == "No":
+        imprt_bot.register_next_step_handler(message, main_choice_func)
 
 def task_func(message):
     cursor.execute(
@@ -159,7 +320,8 @@ def add_task(message, cur_list_id):
         "INSERT INTO tasks (task_name, fk_task_id) VALUES (%s, %s)", (message.text, cur_list_id)
     )
 
-    imprt_bot.send_message(message.chat.id, "You have successfully add the task. Now choose the task action")
+    mssg = imprt_bot.send_message(message.chat.id, "You have successfully add the task")
+    imprt_bot.register_next_step_handler(mssg, choose_list_action, cur_list_id)
 
 @imprt_bot.message_handler(content_types=['text'])
 def echo_all(message):
