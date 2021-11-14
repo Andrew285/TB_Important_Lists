@@ -260,19 +260,19 @@ def show_list(message):
     imprt_bot.send_message(message.chat.id, local_string)
 
 def remove_list(message):
-    # global removed_list
-    # removed_list = message.text
+    global removed_list
+    removed_list = message.text
     menu = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     menu.add(types.KeyboardButton("Yes"),
              types.KeyboardButton("No"))
     msg = imprt_bot.send_message(message.chat.id, "Are you sure?", reply_markup=menu)
-    imprt_bot.register_next_step_handler(msg, remove_list_confirm, message.text)
+    imprt_bot.register_next_step_handler(msg, remove_list_confirm)
 
-def remove_list_confirm(message, list_name):
+def remove_list_confirm(message):
     global removed_list
     if message.text == "Yes":
         cursor.execute(
-            "DELETE FROM lists WHERE list_name = %s", (list_name,)
+            "DELETE FROM lists WHERE list_name = %s", (removed_list,)
         )
         mssg = imprt_bot.send_message(message.chat.id, "The list was successfully removed")
         imprt_bot.register_next_step_handler(mssg, main_choice_func)
