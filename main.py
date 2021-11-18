@@ -50,10 +50,10 @@ cursor.execute(
 
 @imprt_bot.message_handler(commands=['start'])
 def main_choice_func(message):
-    cursor.execute(f"SELECT user_id FROM id_users WHERE user_id = {message.chat.id};")
+    cursor.execute("SELECT user_id FROM id_users WHERE user_id = %s", (message.chat.id, ))
     data = cursor.fetchone()
     if data is None:
-        cursor.execute(f"INSERT INTO id_users VALUES ({message.chat.id});")
+        cursor.execute("INSERT INTO id_users VALUES (%s)", (message.chat.id, ))
 
     start_menu = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     start_menu.add(types.KeyboardButton("Create List"),
@@ -271,6 +271,9 @@ def remove_list(message):
 def remove_list_confirm(message):
     global removed_list
     if message.text == "Yes":
+        cursor.execute(
+            "DROP * FROM tasks WHERE fk_task_id = %s", ()
+        )
         cursor.execute(
             "DELETE FROM lists WHERE list_name = %s", (removed_list,)
         )
