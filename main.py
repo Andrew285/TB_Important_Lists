@@ -248,7 +248,7 @@ def show_list(message):
     task_list = []
     local_string = ""
     while True:
-        row = cursor.fetchone()
+        row = cursor.fetchone()[0]
         if row:
             task_list.append(row)
         else:
