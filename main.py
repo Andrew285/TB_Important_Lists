@@ -190,7 +190,7 @@ def choose_edit_action(message):
 def add_task_to_edit_list(message):
     global edited_list_id
     cursor.execute(
-        "INSERT INTO tasks (task_name, fk_task_id)) VALUES (%s, %s)", (message.text, edited_list_id)
+        "INSERT INTO tasks (task_name, fk_task_id) VALUES (%s, %s)", (message.text, edited_list_id)
     )
     added_task = imprt_bot.send_message(message.chat.id, "Successfully added")
     imprt_bot.register_next_step_handler(added_task, choose_edit_action)
@@ -272,7 +272,7 @@ def remove_list_confirm(message):
     global removed_list
     if message.text == "Yes":
         cursor.execute(
-            "DROP * FROM tasks WHERE fk_task_id = %s", ()
+            "DELETE FROM tasks WHERE fk_task_id = %s", ()
         )
         cursor.execute(
             "DELETE FROM lists WHERE list_name = %s", (removed_list,)
