@@ -87,6 +87,7 @@ def choose_list_action(message):
             start_menu = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             for i in range(len(list_name)):
                 start_menu.add(types.KeyboardButton(text=f"{list_name[i][0]}"))
+            start_menu.add(types.KeyboardButton(text="Return"))
             msg = imprt_bot.send_message(message.chat.id, "Choose List:", reply_markup=start_menu)
             imprt_bot.register_next_step_handler(msg, show_list)
         else:
@@ -243,27 +244,35 @@ def set_new_list_name(message):
     imprt_bot.register_next_step_handler(mssg, choose_edit_action)
 
 def show_list(message):
-    cursor.execute(
-        "SELECT list_id FROM lists WHERE list_name = %s", (message.text,)
-    )
-    list_id = cursor.fetchone()
+    if message.text == "Return":
+        imprt_bot.register_next_step_handler(message, main_choice_func)
 
-    cursor.execute(
-        "SELECT task_name FROM tasks WHERE fk_task_id = %s", (list_id,)
-    )
-    task_list = []
-    local_string = ""
-    while True:
-        row = cursor.fetchone()
-        if row:
-            task_list.append(row)
-        else:
-            break
+    elif message.text != "Return":
+        cursor.execute(
+            "SELECT list_id FROM lists WHERE list_name = %s", (message.text,)
+        )
+        list_id = cursor.fetchone()
 
-    for i in range(len(task_list)):
-        local_string += task_list[i][0]
-        local_string += "\n"
-    imprt_bot.send_message(message.chat.id, local_string)
+        cursor.execute(
+            "SELECT task_name FROM tasks WHERE fk_task_id = %s", (list_id,)
+        )
+        task_list = []
+        local_string = ""
+        while True:
+            row = cursor.fetchone()
+            if row:
+                task_list.append(row)
+            else:
+                break
+
+        for i in range(len(task_list)):
+            local_string += task_list[i][0]
+            local_string += "\n"
+        imprt_bot.send_message(message.chat.id, local_string)
+
+    else:
+        imprt_bot.send_message(message.char.id, "Bad request")
+        imprt_bot.register_next_step_handler(message, main_choice_func)
 
 def remove_list(message):
     global removed_list
@@ -309,10 +318,10 @@ def task_func(message):
         cursor.execute(
             "INSERT INTO lists (list_name, fk_list_id) VALUES (%s, %s)", (message.text, message.chat.id)
         )
-        cursor.execute(
-            f"SELECT list_id FROM lists WHERE list_name = %s", (message.text, )
-        )
-        list_id = cursor.fetchone()
+    cursor.execute(
+        f"SELECT list_id FROM lists WHERE list_name = %s", (message.text, )
+    )
+    list_id = cursor.fetchone()
 
     # list_id = []
     # while True:
