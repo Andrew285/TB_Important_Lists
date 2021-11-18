@@ -16,6 +16,7 @@ connection.autocommit = True
 cursor = connection.cursor()
 
 edited_list_id = 0
+removed_list_id = 0
 removed_task = ""
 removed_list = ""
 
@@ -261,7 +262,12 @@ def show_list(message):
 
 def remove_list(message):
     global removed_list
+    global removed_list_id
     removed_list = message.text
+    cursor.execute(
+        "SELECT list_id FROM lists WHERE list_name = %s", (message.text,)
+    )
+    removed_list_id = cursor.fetchone()
     menu = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     menu.add(types.KeyboardButton("Yes"),
              types.KeyboardButton("No"))
@@ -270,9 +276,10 @@ def remove_list(message):
 
 def remove_list_confirm(message):
     global removed_list
+    global removed_list_id
     if message.text == "Yes":
         cursor.execute(
-            "DELETE FROM tasks WHERE fk_task_id = %s", ()
+            "DELETE FROM tasks WHERE fk_task_id = %s", (removed_list_id,)
         )
         cursor.execute(
             "DELETE FROM lists WHERE list_name = %s", (removed_list,)
