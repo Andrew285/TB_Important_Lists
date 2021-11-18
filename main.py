@@ -248,14 +248,14 @@ def show_list(message):
     task_list = []
     local_string = ""
     while True:
-        row = cursor.fetchone()[0]
+        row = cursor.fetchone()
         if row:
             task_list.append(row)
         else:
             break
 
     for i in range(len(task_list)):
-        local_string += task_list[i]
+        local_string += task_list[i][0]
         local_string += "\n"
     imprt_bot.send_message(message.chat.id, local_string)
 
