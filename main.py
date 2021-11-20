@@ -322,6 +322,8 @@ def task_func(message):
         "SELECT list_id FROM lists WHERE list_name = %s", (message.text, )
     )
     list_id = cursor.fetchone()
+    imprt_bot.send_message(message.chat.id, f"it is before {list_id}")
+
 
     # list_id = []
     # while True:
@@ -358,6 +360,7 @@ def choose_task_action(message):
 
 def add_task(message):
     global list_id
+    imprt_bot.send_message(message.chat.id, f"it is after {list_id}")
     cursor.execute(
         "INSERT INTO tasks (task_name, fk_task_id) VALUES (%s, %s)", (message.text, list_id)
     )
