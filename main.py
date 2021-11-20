@@ -311,7 +311,7 @@ def task_func(message):
 
     list_name = message.text
     cursor.execute(
-        f"SELECT list_name FROM lists WHERE fk_list_id = {message.chat.id};"
+        "SELECT list_name FROM lists WHERE fk_list_id = %s", (message.chat.id, )
     )
     temp_list_name = cursor.fetchone()
     if temp_list_name is None:
@@ -319,7 +319,7 @@ def task_func(message):
             "INSERT INTO lists (list_name, fk_list_id) VALUES (%s, %s)", (message.text, message.chat.id)
         )
     cursor.execute(
-        f"SELECT list_id FROM lists WHERE list_name = %s", (message.text, )
+        "SELECT list_id FROM lists WHERE list_name = %s", (message.text, )
     )
     list_id = cursor.fetchone()
 
