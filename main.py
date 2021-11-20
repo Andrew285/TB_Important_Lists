@@ -311,17 +311,13 @@ def task_func(message):
 
     list_name = message.text
     cursor.execute(
-        "SELECT list_name FROM lists WHERE fk_list_id = %s", (message.chat.id, )
-    )
-    temp_list_name = cursor.fetchone()
-    if temp_list_name is None:
-        cursor.execute(
-            "INSERT INTO lists (list_name, fk_list_id) VALUES (%s, %s)", (message.text, message.chat.id)
-        )
-    cursor.execute(
         "SELECT list_id FROM lists WHERE list_name = %s", (message.text, )
     )
     list_id = cursor.fetchone()
+    if list_id is None:
+        cursor.execute(
+            "INSERT INTO lists (list_name, fk_list_id) VALUES (%s, %s)", (message.text, message.chat.id)
+        )
     imprt_bot.send_message(message.chat.id, f"it is before {list_id}")
 
 
